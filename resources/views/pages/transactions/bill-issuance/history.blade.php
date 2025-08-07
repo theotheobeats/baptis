@@ -1,0 +1,150 @@
+@extends('layouts.app')
+
+
+@section('content')
+
+<!-- Main Content Area -->
+<div class="content-wraper-area">
+    <div class="data-table-area">
+        <div class="container-fluid">
+            <div class="row g-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body card-breadcrumb">
+                            <div class="page-title-box d-flex align-items-center justify-content-between">
+                                <h4 class="mb-0">
+                                    Riwayat {{ $information['title'] }}
+
+                                    <ol class="breadcrumb m-0">
+                                        <li class="breadcrumb-item"><a href="javascript: void(0);">Transaksi</a></li>
+                                        <li class="breadcrumb-item active">{{ $information['title'] }}</li>
+                                    </ol>
+                                </h4>
+                                
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12">
+                    <div class="card bg-white">
+                        <div class="card-body">
+                            <input type="text" class="form-control mb-3" id="input-table-search" placeholder="Cari" style="width: 100%;">
+                            <table id="index-table" class="table table-bordered dt-responsive nowrap data-table-area">
+                                <thead>
+                                    <tr>
+                                        <th>No</th>
+                                        <th>NIS</th>
+                                        <th>Nama Siswa</th>
+                                        <th>Bulan</th>
+                                        <th>Tahun</th>
+                                        <th>Tanggal Batas Bayar</th>
+                                        <th>Status</th>
+                                        <th>Nominal</th>
+                                        <th>Aksi</th>
+                                    </tr>
+                                </thead>
+
+                                <tbody>
+                                </tbody>
+                            </table>
+
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@endsection
+
+
+@section ('js_after')
+<script src="{{ asset('/js/exceljson/js/xlsx.core.min.js') }}"></script>
+<script src="{{ asset('/js/exceljson/js/FileSaver.js') }}"></script>
+<script src="{{ asset('/js/exceljson/js/jhxlsx.js') }}"></script>
+<script>
+    var data_table_search_delay = null;
+    var data_table = null;
+
+    $(function() {
+
+        data_table = $("#index-table").DataTable({
+            processing: true,
+            serverSide: true,
+            lengthChange: false,
+            pageLength: 5,
+            searchDelay: 2000,
+            ajax: {
+                url: "{{ url($information['route']) }}/history"
+            },
+            order: [
+                [3, 'desc']
+            ],
+            columns: [{
+                    data: 'DT_RowIndex',
+                    sortable: false,
+                    searchable: false
+                },
+                {
+                    name: "students.nis",
+                    data: "student_nis"
+                },
+                {
+                    name: "students.name",
+                    data: "student_name"
+                },
+                {
+                    name: "invoices.payment_for_month",
+                    data: "payment_for_month"
+                },
+                {
+                    name: "invoices.payment_for_year",
+                    data: "payment_for_year"
+                },
+                {
+                    name: "invoices.payment_due_date",
+                    data: "payment_due_date"
+                },
+                {
+                    name: "invoices.status",
+                    data: "status",
+                    render: function(data, type, row) {
+                        var status = '';
+                        if (data === 'pending') {
+                            status = '<span class="badge badge-warning">Pending</span>';
+                        } else if (data === 'canceled') {
+                            status = '<span class="badge badge-danger">Canceled</span>';
+                        } else if (data === 'paid_off') {
+                            status = '<span class="badge badge-success">Paid Off</span>';
+                        } else if (data === 'part_payment') {
+                            status = '<span class="badge badge-info">Part Payment</span>';
+                        }
+                        return status;
+                    }
+                },
+                {
+                    name: "invoices.price",
+                    data: "price"
+                },
+                {
+                    data: "action",
+                    searchable: false,
+                    sortable: false
+                },
+            ],
+        });
+
+        $('#input-table-search').keyup(function() {
+            clearTimeout(data_table_search_delay);
+            data_table_search_delay = setTimeout(() => {
+                data_table.search($(this).val()).draw();
+            }, 350);
+        })
+
+    });
+</script>
+@endsection
